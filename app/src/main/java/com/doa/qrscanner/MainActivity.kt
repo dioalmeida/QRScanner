@@ -137,7 +137,8 @@ class MainActivity : AppCompatActivity(), CameraXConfig.Provider {
                             //TODO parse other Barcode types
                         }
 
-                        messageTextView.text =messageTextView.text.toString()+"\nDETECTED QR CODE TYPE " + valueType
+                        messageTextView.text =
+                            messageTextView.text.toString() + "\nDETECTED QR CODE TYPE " + valueType
                     }
                     // [END get_barcodes]
                     // [END_EXCLUDE]
