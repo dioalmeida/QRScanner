@@ -38,20 +38,23 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.Executors.newSingleThreadExecutor
 
-class MainActivity : AppCompatActivity() ,  CameraXConfig.Provider {
+class MainActivity : AppCompatActivity(), CameraXConfig.Provider {
 
     override fun getCameraXConfig(): CameraXConfig {
         return Camera2Config.defaultConfig()
     }
-    private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
+
+    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
 
     private val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(
-                    Barcode.FORMAT_QR_CODE,
-                    Barcode.FORMAT_AZTEC)
-            .build()
-    private lateinit var previewView :PreviewView
+        .setBarcodeFormats(
+            Barcode.FORMAT_QR_CODE,
+            Barcode.FORMAT_AZTEC
+        )
+        .build()
+    private lateinit var previewView: PreviewView
     private lateinit var messageTextView: TextView
+
     companion object {
         private val TAG = MainActivity::class.java.simpleName
         private const val PERMISSION_CAMERA_REQUEST = 1
@@ -62,10 +65,8 @@ class MainActivity : AppCompatActivity() ,  CameraXConfig.Provider {
 
         setContentView(R.layout.activity_main)
         messageTextView = findViewById(R.id.tv_message)
-        previewView=  findViewById(R.id.preview_view)
+        previewView = findViewById(R.id.preview_view)
 
-
-//        val analyzer = ImageAnalyzer(this, options, messageTextView)
         val runnable = Runnable {
             while (true) {
                 sleep(1000)
@@ -74,91 +75,86 @@ class MainActivity : AppCompatActivity() ,  CameraXConfig.Provider {
         }
         val executor = Executors.newSingleThreadExecutor()
         executor.execute(runnable)
-//        analyzer.analyze()
 
 
         if (isCameraPermissionGranted()) {
-            cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-            cameraProviderFuture.addListener(Runnable {
-                val cameraProvider = cameraProviderFuture.get()
-                bindPreview(cameraProvider)
-            }, ContextCompat.getMainExecutor(this))
-
+            startCameraPreview()
         } else {
             ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.CAMERA),
-                    PERMISSION_CAMERA_REQUEST
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                PERMISSION_CAMERA_REQUEST
             )
         }
     }
 
     private fun scanBarcodes(bmp: Bitmap?) {
-        if (bmp!= null) {
+        if (bmp != null) {
             val image = InputImage.fromBitmap(bmp, 0)
             // [START set_detector_options]
             val options = BarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(
-                            Barcode.FORMAT_QR_CODE,
-                            Barcode.FORMAT_AZTEC)
-                    .build()
+                .setBarcodeFormats(
+                    Barcode.FORMAT_QR_CODE,
+                    Barcode.FORMAT_AZTEC
+                )
+                .build()
             // [END set_detector_options]
 
             // [START get_detector]
 //            val scanner = BarcodeScanning.getClient()
             // Or, to specify the formats to recognize:
-             val scanner = BarcodeScanning.getClient(options)
+            val scanner = BarcodeScanning.getClient(options)
             // [END get_detector]
 
             // [START run_detector]
             val result = scanner.process(image)
-                    .addOnSuccessListener { barcodes ->
-                        // Task completed successfully
-                        // [START_EXCLUDE]
-                        // [START get_barcodes]
-                        for (barcode in barcodes) {
-                            val bounds = barcode.boundingBox
-                            val corners = barcode.cornerPoints
+                .addOnSuccessListener { barcodes ->
+                    // Task completed successfully
+                    // [START_EXCLUDE]
+                    // [START get_barcodes]
+                    for (barcode in barcodes) {
+                        val bounds = barcode.boundingBox
+                        val corners = barcode.cornerPoints
 
-                            val rawValue = barcode.rawValue
+                        val rawValue = barcode.rawValue
 
-                            val valueType = barcode.valueType
-                            // See API reference for complete list of supported types
-                            when (valueType) {
-                                Barcode.TYPE_WIFI -> {
-                                    val ssid = barcode.wifi!!.ssid
-                                    val password = barcode.wifi!!.password
-                                    val type = barcode.wifi!!.encryptionType
-                                    messageTextView.text = ssid + "\n" +password+"\n"+type
-                                }
-                                Barcode.TYPE_URL -> {
-                                    val title = barcode.url!!.title
-                                    val url = barcode.url!!.url
-                                }
+                        val valueType = barcode.valueType
+                        // See API reference for complete list of supported types
+                        when (valueType) {
+                            Barcode.TYPE_WIFI -> {
+                                val ssid = barcode.wifi!!.ssid
+                                val password = barcode.wifi!!.password
+                                val type = barcode.wifi!!.encryptionType
+                                messageTextView.text = ssid + "\n" + password + "\n" + type
                             }
-
-                            messageTextView.text = "DETECTED QR CODE TYPE " + valueType
+                            Barcode.TYPE_URL -> {
+                                val title = barcode.url!!.title
+                                val url = barcode.url!!.url
+                            }
                         }
-                        // [END get_barcodes]
-                        // [END_EXCLUDE]
 
+                        messageTextView.text = "DETECTED QR CODE TYPE " + valueType
                     }
-                    .addOnFailureListener {
-                        Log.e("QRerror","failed.")
-                        // Task failed with an exception
-                        // ...
-                    }
+                    // [END get_barcodes]
+                    // [END_EXCLUDE]
+
+                }
+                .addOnFailureListener {
+                    Log.e("QRerror", "failed.")
+                    // Task failed with an exception
+                    // ...
+                }
             // [END run_detector]
         }
     }
 
-    fun bindPreview(cameraProvider : ProcessCameraProvider) {
-        val preview : Preview = Preview.Builder()
-                .build()
+    fun bindPreview(cameraProvider: ProcessCameraProvider) {
+        val preview: Preview = Preview.Builder()
+            .build()
 
-        val cameraSelector : CameraSelector = CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build()
+        val cameraSelector: CameraSelector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
         preview.setSurfaceProvider(previewView.createSurfaceProvider())
 
 //        preview.setSurfaceProvider(previewView.surface)
@@ -168,13 +164,13 @@ class MainActivity : AppCompatActivity() ,  CameraXConfig.Provider {
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
     ) {
         if (requestCode == PERMISSION_CAMERA_REQUEST) {
             if (isCameraPermissionGranted()) {
-                // start camera
+                startCameraPreview()
             } else {
                 Log.e(TAG, "no camera permission")
             }
@@ -184,8 +180,16 @@ class MainActivity : AppCompatActivity() ,  CameraXConfig.Provider {
 
     private fun isCameraPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
-                baseContext,
-                Manifest.permission.CAMERA
+            baseContext,
+            Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun startCameraPreview() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener(Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            bindPreview(cameraProvider)
+        }, ContextCompat.getMainExecutor(this))
     }
 }
