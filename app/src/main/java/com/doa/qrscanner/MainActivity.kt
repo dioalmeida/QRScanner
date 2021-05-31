@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity(), CameraXConfig.Provider {
                     // Task completed successfully
                     // [START_EXCLUDE]
                     // [START get_barcodes]
+                    messageTextView.text = ""
                     for (barcode in barcodes) {
                         val bounds = barcode.boundingBox
                         val corners = barcode.cornerPoints
@@ -130,10 +131,13 @@ class MainActivity : AppCompatActivity(), CameraXConfig.Provider {
                             Barcode.TYPE_URL -> {
                                 val title = barcode.url!!.title
                                 val url = barcode.url!!.url
+                                messageTextView.text = title + "\n" + url
                             }
+
+                            //TODO parse other Barcode types
                         }
 
-                        messageTextView.text = "DETECTED QR CODE TYPE " + valueType
+                        messageTextView.text =messageTextView.text.toString()+"\nDETECTED QR CODE TYPE " + valueType
                     }
                     // [END get_barcodes]
                     // [END_EXCLUDE]
